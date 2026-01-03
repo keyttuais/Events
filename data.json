@@ -1,8 +1,30 @@
 [
     {
-        "date": "2026-01-03",
+        "date": "2025-11-10",
         "testNumber": 1,
         "subject": "CSAT",
-        "marks": 66
+        "marks": 75,
+        "passMark": 66
+    },
+    {
+        "date": "2025-11-15",
+        "testNumber": 2,
+        "subject": "History",
+        "marks": 82,
+        "passMark": 50
+    },
+    {
+        "date": "2025-11-20",
+        "testNumber": 3,
+        "subject": "CSAT",
+        "marks": 60,
+        "passMark": 66
+    },
+    {
+        "date": "2025-12-05",
+        "testNumber": 4,
+        "subject": "History",
+        "marks": 45,
+        "passMark": 50
     }
 ]
