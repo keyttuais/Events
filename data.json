@@ -1,26 +1,8 @@
 [
     {
-        "date": "2025-01-10",
+        "date": "2026-01-03",
         "testNumber": 1,
-        "subject": "Mathematics",
-        "marks": 75
-    },
-    {
-        "date": "2025-01-25",
-        "testNumber": 2,
-        "subject": "Physics",
-        "marks": 82
-    },
-    {
-        "date": "2025-02-05",
-        "testNumber": 3,
-        "subject": "Chemistry",
-        "marks": 45
-    },
-    {
-        "date": "2025-02-20",
-        "testNumber": 4,
-        "subject": "Biology",
-        "marks": 91
+        "subject": "CSAT",
+        "marks": 66
     }
 ]
