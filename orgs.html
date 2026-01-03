@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UPSC Report Auto-Reader</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 40px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; border-bottom: 3px solid #e67e22; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #34495e; color: white; }
+        .cat-row { background: #fdf2e9; font-weight: bold; color: #d35400; }
+        #error-message { color: red; background: #ffdada; padding: 10px; display: none; margin-bottom: 20px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>UPSC Organization Reports</h1>
+    
+    <div id="error-message">
+        <b>Security Error:</b> Browsers block local file reading for security. 
+        <br>To view this, you must run a simple local server.
+    </div>
+
+    <div id="table-content">Loading data from orgs.json...</div>
+</div>
+
+<script>
+    async function loadData() {
+        try {
+            // Automatically fetch the local file
+            const response = await fetch('orgs.json');
+            
+            if (!response.ok) {
+                throw new Error("Could not find orgs.json in this folder.");
+            }
+
+            const data = await response.json();
+            render(data);
+        } catch (error) {
+            console.error(error);
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('table-content').innerHTML = "Check console (F12) for details.";
+        }
+    }
+
+    function render(data) {
+        let html = `<table>
+                        <thead>
+                            <tr>
+                                <th>Organization</th>
+                                <th>Important Reports</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+        data.international_organizations_reports.forEach(cat => {
+            html += `<tr class="cat-row"><td colspan="2">${cat.category}</td></tr>`;
+            cat.organizations.forEach(org => {
+                html += `<tr>
+                            <td><b>${org.name} (${org.acronym})</b></td>
+                            <td>${org.reports.join(', ')}</td>
+                         </tr>`;
+            });
+        });
+
+        html += `</tbody></table>`;
+        document.getElementById('table-content').innerHTML = html;
+    }
+
+    // Initialize
+    loadData();
+</script>
+
+</body>
+</html>
