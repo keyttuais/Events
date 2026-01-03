@@ -2,99 +2,144 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>JSON Progress Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filtered Progress Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; margin: 40px; background: #f4f4f9; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        canvas { margin-bottom: 30px; }
+        :root { --primary: #2563eb; --success: #16a34a; --danger: #dc2626; --bg: #f8fafc; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); margin: 2rem; color: #1e293b; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        
+        .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: #f1f5f9; padding: 1rem; border-radius: 8px; }
+        select { padding: 8px 16px; border-radius: 6px; border: 1px solid #cbd5e1; font-size: 1rem; cursor: pointer; }
+        
+        .chart-section { margin-bottom: 3rem; height: 350px; }
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #333; color: white; }
-        .pass { color: green; font-weight: bold; }
-        .fail { color: red; font-weight: bold; }
+        th { background: #f1f5f9; text-align: left; padding: 12px; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        
+        .status-pill { padding: 4px 12px; border-radius: 9999px; font-size: 0.85rem; font-weight: 600; }
+        .pass { background: #dcfce7; color: var(--success); }
+        .fail { background: #fee2e2; color: var(--danger); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Performance Dashboard</h2>
-    <canvas id="progressChart" height="150"></canvas>
+    <h1>Academic Dashboard</h1>
+
+    <div class="controls">
+        <label for="subjectFilter"><strong>Filter by Subject:</strong></label>
+        <select id="subjectFilter">
+            <option value="All">All Subjects</option>
+        </select>
+    </div>
+
+    <div class="chart-section">
+        <canvas id="progressChart"></canvas>
+    </div>
 
     <table>
         <thead>
             <tr>
                 <th>Date</th>
-                <th>Test #</th>
                 <th>Subject</th>
-                <th>Marks (%)</th>
+                <th>Score</th>
                 <th>Result</th>
             </tr>
         </thead>
-        <tbody id="tableBody">
-            </tbody>
+        <tbody id="tableBody"></tbody>
     </table>
 </div>
 
 <script>
-    async function loadData() {
+    let allData = [];
+    let myChart = null;
+
+    async function init() {
         try {
-            // Fetching the JSON file
-            const response = await fetch('data.json');
-            const data = await response.json();
+            const response = await fetch('data.json?t=' + new Date().getTime());
+            allData = await response.json();
             
-            const labels = [];
-            const scores = [];
-            const tableBody = document.getElementById('tableBody');
-            const passingMark = 50;
+            populateFilter(allData);
+            updateDisplay("All"); // Initial Load
 
-            data.forEach(item => {
-                // Determine Pass/Fail
-                const result = item.marks >= passingMark ? "Pass" : "Fail";
-                const resultClass = item.marks >= passingMark ? "pass" : "fail";
-
-                // Update Table
-                const row = `<tr>
-                    <td>${item.date}</td>
-                    <td>${item.testNumber}</td>
-                    <td>${item.subject}</td>
-                    <td>${item.marks}</td>
-                    <td class="${resultClass}">${result}</td>
-                </tr>`;
-                tableBody.innerHTML += row;
-
-                // Prepare Graph Data
-                labels.push(`${item.subject} (T${item.testNumber})`);
-                scores.push(item.marks);
+            document.getElementById('subjectFilter').addEventListener('change', (e) => {
+                updateDisplay(e.target.value);
             });
-
-            renderChart(labels, scores);
-        } catch (error) {
-            console.error("Error loading JSON data:", error);
-            alert("Note: To view this, you must use a local server or upload it to a host (like GitHub Pages).");
+        } catch (err) {
+            console.error("Fetch error:", err);
         }
     }
 
-    function renderChart(labels, scores) {
+    function populateFilter(data) {
+        const filter = document.getElementById('subjectFilter');
+        const subjects = [...new Set(data.map(item => item.subject))];
+        subjects.forEach(sub => {
+            const opt = document.createElement('option');
+            opt.value = sub;
+            opt.innerHTML = sub;
+            filter.appendChild(opt);
+        });
+    }
+
+    function updateDisplay(selectedSubject) {
+        const filteredData = selectedSubject === "All" 
+            ? allData 
+            : allData.filter(item => item.subject === selectedSubject);
+
+        // Update Table
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = "";
+        
+        const labels = [];
+        const scores = [];
+
+        filteredData.forEach(item => {
+            const isPass = item.marks >= item.passMark;
+            tableBody.innerHTML += `
+                <tr>
+                    <td>${item.date}</td>
+                    <td>${item.subject} (T${item.testNumber})</td>
+                    <td>${item.marks}% / ${item.passMark}%</td>
+                    <td><span class="status-pill ${isPass ? 'pass' : 'fail'}">${isPass ? 'Pass' : 'Fail'}</span></td>
+                </tr>`;
+            
+            labels.push(`${item.date}`);
+            scores.push(item.marks);
+        });
+
+        renderChart(labels, scores, selectedSubject);
+    }
+
+    function renderChart(labels, scores, subjectName) {
         const ctx = document.getElementById('progressChart').getContext('2d');
-        new Chart(ctx, {
+        
+        // If chart exists, destroy it before creating a new one to prevent overlap
+        if (myChart) { myChart.destroy(); }
+
+        myChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Score %',
+                    label: `${subjectName} Progress (%)`,
                     data: scores,
-                    borderColor: '#4a90e2',
-                    tension: 0.1,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
                     fill: true,
-                    backgroundColor: 'rgba(74, 144, 226, 0.1)'
+                    tension: 0.3
                 }]
             },
-            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
         });
     }
 
-    loadData();
+    init();
 </script>
 </body>
 </html>
