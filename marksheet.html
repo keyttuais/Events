@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>JSON Progress Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        canvas { margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        th { background: #333; color: white; }
+        .pass { color: green; font-weight: bold; }
+        .fail { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Performance Dashboard</h2>
+    <canvas id="progressChart" height="150"></canvas>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Test #</th>
+                <th>Subject</th>
+                <th>Marks (%)</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    async function loadData() {
+        try {
+            // Fetching the JSON file
+            const response = await fetch('data.json');
+            const data = await response.json();
+            
+            const labels = [];
+            const scores = [];
+            const tableBody = document.getElementById('tableBody');
+            const passingMark = 50;
+
+            data.forEach(item => {
+                // Determine Pass/Fail
+                const result = item.marks >= passingMark ? "Pass" : "Fail";
+                const resultClass = item.marks >= passingMark ? "pass" : "fail";
+
+                // Update Table
+                const row = `<tr>
+                    <td>${item.date}</td>
+                    <td>${item.testNumber}</td>
+                    <td>${item.subject}</td>
+                    <td>${item.marks}</td>
+                    <td class="${resultClass}">${result}</td>
+                </tr>`;
+                tableBody.innerHTML += row;
+
+                // Prepare Graph Data
+                labels.push(`${item.subject} (T${item.testNumber})`);
+                scores.push(item.marks);
+            });
+
+            renderChart(labels, scores);
+        } catch (error) {
+            console.error("Error loading JSON data:", error);
+            alert("Note: To view this, you must use a local server or upload it to a host (like GitHub Pages).");
+        }
+    }
+
+    function renderChart(labels, scores) {
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Score %',
+                    data: scores,
+                    borderColor: '#4a90e2',
+                    tension: 0.1,
+                    fill: true,
+                    backgroundColor: 'rgba(74, 144, 226, 0.1)'
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+    }
+
+    loadData();
+</script>
+</body>
+</html>
