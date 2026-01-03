@@ -1,0 +1,24 @@
+{
+  "international_organizations_reports": [
+    {
+      "category": "Economic & Financial",
+      "organizations": [
+        {
+          "name": "International Monetary Fund",
+          "acronym": "IMF",
+          "reports": ["World Economic Outlook", "Global Financial Stability Report"]
+        }
+      ]
+    },
+    {
+      "category": "Social & Human Development",
+      "organizations": [
+        {
+          "name": "UNDP",
+          "acronym": "UNDP",
+          "reports": ["Human Development Report", "Gender Inequality Index"]
+        }
+      ]
+    }
+  ]
+}
